@@ -4,6 +4,7 @@
 package gerror
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -71,4 +72,31 @@ func New(code int32, err error) *SysError {
 }
 func NewError(code int32, err string) *SysError {
 	return &SysError{Code: code, Content: err}
+}
+
+var RecoverPanicToErr = true
+
+func PanicValToErr(panicVal interface{}, err *error) {
+	if panicVal == nil {
+		return
+	}
+	// case nil
+	switch xerr := panicVal.(type) {
+	case error:
+		*err = xerr
+	case string:
+		*err = errors.New(xerr)
+	default:
+		*err = fmt.Errorf("%v", panicVal)
+	}
+	return
+}
+
+func PanicToErr(err *error) {
+	if RecoverPanicToErr {
+		if x := recover(); x != nil {
+			//debug.PrintStack()
+			PanicValToErr(x, err)
+		}
+	}
 }
