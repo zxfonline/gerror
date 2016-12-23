@@ -6,71 +6,89 @@ package gerror
 import (
 	"errors"
 	"fmt"
+	"strconv"
 )
+
+type ErrorType int32
+
+func (x ErrorType) String() string {
+	return EnumName(ErrorType_name, int32(x))
+}
+
+func (x ErrorType) Value() int32 {
+	return int32(x)
+}
+
+// EnumName is a helper function to simplify printing enums by name.  Given an enum map and a value, it returns a useful string.
+func EnumName(m map[int32]string, v int32) string {
+	s, ok := m[v]
+	if ok {
+		return s
+	}
+	return strconv.Itoa(int(v))
+}
+
+var ErrorType_name = map[int32]string{
+	0:      "OK",
+	100000: "CUSTOM_ERROR",
+	100001: "SERVER_INTERNAL_ERROR",
+	100002: "SERVER_CDATA_ERROR",
+	100003: "SERVER_CMSG_ERROR",
+	100004: "SERVER_FILE_NOT_FOUND",
+	100005: "SERVER_ACCESS_REFUSED",
+	200000: "CLIENT_TIMEOUT",
+	200001: "CLIENT_IO_ERROR",
+}
 
 const (
 	//操作成功的返回码常量
-	OK int32 = 0
+	OK ErrorType = 0
 
 	//通用错误
-	CUSTOM_ERROR int32 = 100000
+	CUSTOM_ERROR ErrorType = 100000
 	//服务器端一般错误
-	SERVER_INTERNAL_ERROR int32 = 100001
-	//读取客户端发送的数据时产生该异常
-	SERVER_CDATA_ERROR int32 = 100002
-	//处理客户端发送的消息时产生该异常
-	SERVER_CMSG_ERROR int32 = 100003
-	//服务器端的文件没有找到错误
-	SERVER_FILE_NOT_FOUND int32 = 100004
+	SERVER_INTERNAL_ERROR ErrorType = 100001
+	//读取客户端发送的数据异常
+	SERVER_CDATA_ERROR ErrorType = 100002
+	//处理客户端发送的数据异常
+	SERVER_CMSG_ERROR ErrorType = 100003
+	//服务器端的文件没有找到
+	SERVER_FILE_NOT_FOUND ErrorType = 100004
 	//服务器端的访问被拒绝
-	SERVER_ACCESS_REFUSED int32 = 100005
+	SERVER_ACCESS_REFUSED ErrorType = 100005
 
 	//客户端访问超时
-	CLIENT_TIMEOUT int32 = 200000
-	//客户端IO错误(如无法建立连接，数据发送失败等)
-	CLIENT_IO_ERROR int32 = 200001
+	CLIENT_TIMEOUT ErrorType = 200000
+	//客户端IO错误
+	CLIENT_IO_ERROR ErrorType = 200001
 )
 
 //判断错误类型是否是允许的错误范围 true=消息内部定义的错误，false=系统级别错误，需要关闭连接
-func IsCustomError(e int32) bool {
+func IsCustomError(e ErrorType) bool {
 	return e < CUSTOM_ERROR
-}
-
-var ErrMap = map[int32]string{
-	OK: "成功",
-
-	CUSTOM_ERROR:          "通用错误",
-	SERVER_INTERNAL_ERROR: "服务器端一般错误",
-	SERVER_CDATA_ERROR:    "读取客户端发送的数据异常",
-	SERVER_CMSG_ERROR:     "处理客户端发送的数据异常",
-	SERVER_FILE_NOT_FOUND: "服务器端的文件没有找到",
-	SERVER_ACCESS_REFUSED: "服务器端的访问被拒绝",
-
-	CLIENT_TIMEOUT:  "客户端访问超时",
-	CLIENT_IO_ERROR: "客户端IO错误",
 }
 
 //系统常规错误
 type SysError struct {
-	Code    int32  `json:"ret"`
-	Content string `json:"result,omitempty"`
-	Cause   error  `json:"-"`
+	Code    ErrorType `json:"ret"`
+	Content string    `json:"result,omitempty"`
+	Cause   error     `json:"-"`
 }
 
-func (this *SysError) Error() string {
-	if this.Cause == nil {
-		return fmt.Sprintf("ret:%d,msg:%s", this.Code, this.Content)
-	} else if this.Content != "" {
-		return fmt.Sprintf("ret:%d,msg:%s,cause:%s", this.Code, this.Content, this.Cause.Error())
+func (err *SysError) Error() string {
+	if err.Cause == nil {
+		return fmt.Sprintf("ret:%d,msg:%s", err.Code, err.Content)
+	} else if err.Content != "" {
+		return fmt.Sprintf("ret:%d,msg:%s,cause:%s", err.Code, err.Content, err.Cause.Error())
 	} else {
-		return fmt.Sprintf("ret:%d,cause:%s", this.Code, this.Cause.Error())
+		return fmt.Sprintf("ret:%d,cause:%s", err.Code, err.Cause.Error())
 	}
 }
 
-func New(code int32, err error) *SysError {
+func New(code ErrorType, err error) *SysError {
 	return &SysError{Code: code, Content: err.Error()}
 }
-func NewError(code int32, err string) *SysError {
+func NewError(code ErrorType, err string) *SysError {
 	return &SysError{Code: code, Content: err}
 }
 
