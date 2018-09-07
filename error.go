@@ -92,6 +92,9 @@ func New(code ErrorType, err error) *SysError {
 func NewError(code ErrorType, err string) *SysError {
 	return &SysError{Code: code, Content: err}
 }
+func NewErrorByCode(code ErrorType) *SysError {
+	return &SysError{Code: code, Content: code.String()}
+}
 
 var RecoverPanicToErr = true
 
