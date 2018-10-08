@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+
+	"github.com/zxfonline/golog"
 )
 
 type ErrorType int32
@@ -120,5 +122,11 @@ func PanicToErr(err *error) {
 			//debug.PrintStack()
 			PanicValToErr(x, err)
 		}
+	}
+}
+
+func PrintPanicStack() {
+	if x := recover(); x != nil {
+		golog.Errorf("Recovered %v.", x)
 	}
 }
