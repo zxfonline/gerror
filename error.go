@@ -73,9 +73,10 @@ func IsCustomError(e ErrorType) bool {
 
 //系统常规错误
 type SysError struct {
-	Code    ErrorType `json:"ret"`
-	Content string    `json:"result,omitempty"`
-	Cause   error     `json:"-"`
+	Code    ErrorType   `json:"ret"`
+	Content string      `json:"result,omitempty"`
+	Cause   error       `json:"-"`
+	Data    interface{} `json:"data,omitempty"`
 }
 
 func (err *SysError) Error() string {
